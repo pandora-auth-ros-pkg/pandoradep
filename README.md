@@ -16,7 +16,7 @@ python setup.py install
 ### Usage
 Init `wstool` in your workspace:
 ```
-wstoll init .
+wstool init .
 ```
 Scan and write the dependencies to a `.rosinstall` file:
 ```
