@@ -1,10 +1,10 @@
-pandoradep
+pandoradep [![PyPI version](https://badge.fury.io/py/pandoradep.svg)](http://badge.fury.io/py/pandoradep)
 ==========
 
 pandoradep is a python tool for easy deployment of PANDORA packages
 
 ### Install
-Via `PyPI`:
+Via [PyPI][1]:
 ```
 sudo pip install pandoradep
 ```
@@ -29,3 +29,5 @@ wstool update
 ```
 
 _Note: you can find more info about `wstool` and `rosinstall` files [here](https://github.com/pandora-auth-ros-pkg/pandora_docs/wiki/Setup%20Packages)._
+
+[1]: https://pypi.python.org/pypi/pandoradep
