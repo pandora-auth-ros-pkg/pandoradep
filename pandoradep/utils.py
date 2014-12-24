@@ -94,9 +94,6 @@ def print_repos(depends, repos, http, git, save_path):
 def update_upstream(output_file, content, env_var):
     ''' Updates upstream yaml file '''
 
-    with open(output_file, 'w') as f:
-        f.write(yaml.dump(content))
-
     scripts_path = os.getenv(env_var)
 
     if not scripts_path:
@@ -109,6 +106,9 @@ def update_upstream(output_file, content, env_var):
         click.echo(click.style('Make sure your env is set properly.',
                                fg=colors['debug']))
         sys.exit(1)
+
+    with open(output_file, 'w') as file_handler:
+        file_handler.write(yaml.dump(content))
 
     git_commands = ["git add -u",
                     "git commit -m 'Update repos.yml'",

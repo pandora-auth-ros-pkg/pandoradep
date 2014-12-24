@@ -53,6 +53,8 @@ def create(root_of_pkgs):
 def update(root, repo_name, repos_file, env):
     '''Updates dependencies [used by Jenkins]'''
 
+    repos_file = os.path.abspath(repos_file)
+
     try:
         with open(repos_file, 'r') as file_handler:
             repos = yaml.safe_load(file_handler)
