@@ -1,9 +1,9 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
 
 setup(name='pandoradep',
       packages=['pandoradep'],
-      version='0.1',
+      version='0.1.1',
       py_modules=['index'],
       description="A tiny cli tool to manage PANDORA's dependencies.",
       author='PANDORA Robotics Team',
