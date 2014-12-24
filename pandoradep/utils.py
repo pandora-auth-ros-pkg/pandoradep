@@ -68,9 +68,11 @@ def print_repos(depends, repos, http, git, save_path):
         click.echo()
         try:
             os.chdir(save_path)
-        except OSError:
+        except OSError, err:
+            click.echo(click.style(str(err), fg=colors['error']))
             click.echo(click.style('Invalid save path ' + save_path,
                        fg=colors['error']))
+            sys.exit(1)
 
         for repo in repos_to_fetch:
             git_repo = template.substitute(repo_name=repo)
@@ -78,7 +80,9 @@ def print_repos(depends, repos, http, git, save_path):
                        fg=colors['info']))
             try:
                 check_call(['git', 'clone', git_repo])
-            except subprocess.CalledProcessError:
+            except subprocess.CalledProcessError, err:
+                click.echo(click.style(str(err), fg=colors['error']))
+                sys.exit(1)
                 pass
     else:
 
@@ -97,11 +101,14 @@ def update_upstream(output_file, content, env_var):
 
     if not scripts_path:
         raise ValueError('$' + env_var + ' is not set properly.')
+        sys.exit(1)
     try:
         os.chdir(scripts_path)
-    except OSError:
-        click.echo(click.style('Error: Make sure your enviroment is set properly',
-                   fg=colors['error']))
+    except OSError, err:
+        click.echo(click.style(str(err), fg=colors['error']))
+        click.echo(click.style('Make sure your env is set properly.',
+                               fg=colors['debug']))
+        sys.exit(1)
 
     git_commands = ["git add -u",
                     "git commit -m 'Update repos.yml'",
@@ -112,5 +119,6 @@ def update_upstream(output_file, content, env_var):
         click.echo(click.style('+ ' + cmd, fg=colors['debug']))
         try:
             check_call(cmd, shell=True)
-        except subprocess.CalledProcessError:
-            click.echo(click.style('Error: ' + cmd, fg=colors['error']))
+        except subprocess.CalledProcessError, err:
+            click.echo(click.style(str(err), fg=colors['error']))
+            sys.exit(1)

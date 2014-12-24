@@ -1,10 +1,12 @@
 import os
+import sys
 
 import click
 import yaml
 import catkin_pkg.packages
 
 from pandoradep import utils
+from pandoradep.config import colors
 
 
 @click.group()
@@ -36,8 +38,8 @@ def create(root_of_pkgs):
 
     click.echo(package_dirs)
 
-    with open('repos.yml', 'w') as f:
-        f.write(yaml.dump(package_dirs))
+    with open('repos.yml', 'w') as file_handler:
+        file_handler.write(yaml.dump(package_dirs))
 
 
 @cli.command()
@@ -51,23 +53,37 @@ def create(root_of_pkgs):
 def update(root, repo_name, repos_file, env):
     '''Updates dependencies [used by Jenkins]'''
 
-    with open(repos_file, 'r') as f:
-        repos = yaml.safe_load(f)
+    try:
+        with open(repos_file, 'r') as file_handler:
+            repos = yaml.safe_load(file_handler)
+    except IOError, err:
+        click.echo(click.style(str(err), fg=colors['error']))
+        sys.exit(1)
 
+    # Info collected from catkin packages
     catkin_output = catkin_pkg.packages.find_packages(root)
 
+    # Just the names of the packages
     local_pkgs = [pkg.name for pkg in catkin_output.values()]
 
-    if set(repos[repo_name]) == set(local_pkgs):
-        click.echo(click.style('Nothing changed', fg='green'))
+    try:
+        repo_dependencies = set(repos[repo_name])
+    except KeyError, err:
+        click.echo(click.style(str(err) + ' not found in ' + repos_file,
+                               fg=colors['error']))
+        click.echo(click.style(str(repos.keys()), fg=colors['debug']))
+        sys.exit(1)
+
+    if repo_dependencies == set(local_pkgs):
+        click.echo(click.style('Nothing changed', fg=colors['success']))
     else:
-        click.echo(click.style('Updating packages...', fg='yellow'))
+        click.echo(click.style('Updating packages...', fg=colors['info']))
         repos[repo_name] = local_pkgs
         utils.update_upstream(repos_file, repos, env)
 
 
 @cli.command()
-@click.argument('directory')
+@click.argument('directory', type=click.Path(exists=True, readable=True))
 @click.option('--build', is_flag=True,
               help='Return only the build dependencies')
 @click.option('--run', is_flag=True, help='Return only the run dependencies')
