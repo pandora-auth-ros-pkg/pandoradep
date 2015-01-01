@@ -6,7 +6,7 @@ import yaml
 import catkin_pkg.packages
 
 from pandoradep import utils
-from pandoradep.config import colors
+from pandoradep.config import COLORS
 
 
 @click.group()
@@ -59,7 +59,7 @@ def update(root, repo_name, repos_file, env):
         with open(repos_file, 'r') as file_handler:
             repos = yaml.safe_load(file_handler)
     except IOError, err:
-        click.echo(click.style(str(err), fg=colors['error']))
+        click.echo(click.style(str(err), fg=COLORS['error']))
         sys.exit(1)
 
     # Info collected from catkin packages
@@ -72,14 +72,14 @@ def update(root, repo_name, repos_file, env):
         repo_dependencies = set(repos[repo_name])
     except KeyError, err:
         click.echo(click.style(str(err) + ' not found in ' + repos_file,
-                               fg=colors['error']))
-        click.echo(click.style(str(repos.keys()), fg=colors['debug']))
+                               fg=COLORS['error']))
+        click.echo(click.style(str(repos.keys()), fg=COLORS['debug']))
         sys.exit(1)
 
     if repo_dependencies == set(local_pkgs):
-        click.echo(click.style('Nothing changed', fg=colors['success']))
+        click.echo(click.style('Nothing changed', fg=COLORS['success']))
     else:
-        click.echo(click.style('Updating packages...', fg=colors['info']))
+        click.echo(click.style('Updating packages...', fg=COLORS['info']))
         repos[repo_name] = local_pkgs
         utils.update_upstream(repos_file, repos, env)
 

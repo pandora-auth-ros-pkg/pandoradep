@@ -13,7 +13,7 @@ GIT_TEMPLATE_SSH = 'git@github.com:pandora-auth-ros-pkg/$repo_name.git'
 GIT_TEMPLATE_HTTPS = 'https://github.com/pandora-auth-ros-pkg/$repo_name.git'
 
 # Colorscheme
-colors = {'error': 'red',
+COLORS = {'error': 'red',
           'success': 'green',
           'info': 'magenta',
           'debug': 'blue',
