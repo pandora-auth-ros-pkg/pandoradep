@@ -16,16 +16,126 @@ from pandoradep.config import PANDORA_REPO, INSTALL_TEMPLATE_SSH, \
 def get_dependencies(directory, excluded=None):
     ''' Fetches all the run and build dependencies '''
 
-    build_depends = set([])
-    run_depends = set([])
+    depends = []
+    dep_pool = []
 
     pkgs = catkin_pkg.packages.find_packages(directory, excluded)
 
-    for pkg in pkgs:
-        build_depends = build_depends.union(map(str, pkgs[pkg].build_depends))
-        run_depends = run_depends.union(map(str, pkgs[pkg].exec_depends))
+    repos = fetch_upstream()
 
-    return (build_depends, run_depends)
+    for pkg in pkgs:
+
+        dep_pool = pkgs[pkg].build_depends + pkgs[pkg].exec_depends
+
+        for dep in dep_pool:
+            if pandora_lookup(dep.name, repos, with_name=False):
+
+                current_dep = {
+                        "name": dep.name,
+                        "version": dep.version_eq,
+                        "repo": pandora_lookup(dep.name, repos, with_name=True)
+                        }
+
+                depends = resolve_conflicts(depends, current_dep, pkg)
+
+    return depends
+
+
+def unique_depends(pkgs, identifier='name'):
+    ''' Returns a set of pkgs according to their name '''
+
+    temp = []
+
+    for lis in pkgs:
+        for dep in lis:
+            temp.append(dep)
+
+    return {v[identifier]:v for v in temp}.values()
+
+
+def pandora_lookup(package_name, repo_list, with_name=False):
+    ''' Checks if a package belongs to PANDORA.
+
+        Arguments:
+        package_name -- The package we are examine.
+        repo_list    -- The list with the PANDORA repos
+        with_name    -- If True returns the name of the repo that "package_name"
+                        belongs.
+        Returns:
+        True or a repo name if the package_name is in the list.
+        False or None if the package_name ins't in the list.
+
+    '''
+
+    for repo in repo_list.keys():
+        if package_name in repo_list[repo]:
+            if with_name:
+                return repo
+            else:
+                return True
+
+    if with_name:
+        return None
+    else:
+        return False
+
+def resolve_conflicts(old_dep_list, new_dep, package, with_warnings=True):
+    ''' Checks for conflict between old and new dependencies
+
+        Arguments:
+        old_dep_list -- Dictionaries representing PANDORA packages already stored.
+        new_dep      -- A dictionary with a package ready to be stored.
+
+        Returns:
+        The updated old_dep_list
+    '''
+    to_add = True
+
+    if not old_dep_list:
+        old_dep_list.append(new_dep)
+        return old_dep_list
+
+    for old_dep in old_dep_list:
+        if old_dep['name'] == new_dep['name']:
+            if old_dep['version'] != new_dep['version']:
+
+                if with_warnings:
+                    show_warnings(old_dep, new_dep, package)
+                    #sys.exit(1)
+
+                if old_dep['version'] is None:
+                    old_dep['version'] = new_dep['version']
+            to_add = False
+
+        elif old_dep['repo'] == new_dep['repo']:
+            if old_dep['version'] != new_dep['version']:
+
+                if with_warnings:
+                    print 'Repo'
+                    show_warnings(old_dep, new_dep, package)
+                    #sys.exit(1)
+
+                if old_dep['version'] is None:
+                    old_dep['version'] = new_dep['version']
+                elif new_dep['version'] is None:
+                    new_dep['version'] = old_dep['version']
+
+
+    if to_add:
+        old_dep_list.append(new_dep)
+
+    return old_dep_list
+
+
+def show_warnings(old_dep, new_dep, package):
+    ''' Displays warnings and debug info about conflicts. '''
+
+    click.echo(click.style("Package conflict in " + package,
+                            fg=COLORS['warning']))
+    click.echo(click.style('Info: ', fg=COLORS['debug']))
+    click.echo(click.style(str(old_dep), fg=COLORS['debug']))
+    click.echo(click.style(str(new_dep), fg=COLORS['debug']))
+
 
 
 def fetch_upstream():
@@ -52,8 +162,11 @@ def print_repos(depends, repos, http, git, save_path):
 
     for dep in depends:
         for repo in repos.keys():
-            if dep in repos[repo]:
-                repos_to_fetch.add(repo)
+            if dep['name'] in repos[repo]:
+                print {"name": repo, "version": dep['version']}
+
+    print repos_to_fetch
+    sys.exit(69)
 
     if save_path:
 

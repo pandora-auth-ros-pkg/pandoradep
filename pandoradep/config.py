@@ -17,5 +17,6 @@ COLORS = {'error': 'red',
           'success': 'green',
           'info': 'magenta',
           'debug': 'blue',
-          'data': 'white'
+          'data': 'white',
+          'warning': 'yellow'
           }
