@@ -95,10 +95,15 @@ def update(root, repo_name, repos_file, env):
 @click.option('--exclude', '-x', multiple=True, default=None,
               type=click.Path(exists=True, readable=True),
               help='Exclude a directory from the scan.')
-def scan(directory, http, exclude, git, save):
+@click.option('--force', is_flag=True, help='Use it to suppress warnings.')
+def scan(directory, http, exclude, git, save, force):
     ''' Scans the directory tree for dependencies. By default returns
         rosinstall entries that you can feed into the wstool.
     '''
 
-    depends = utils.get_dependencies(directory, exclude)
+    depends = utils.get_dependencies(directory, exclude, force)
+
+    uniq_depends = utils.unique_depends(depends)
+
+    utils.print_repos(uniq_depends, http, git, save)
 

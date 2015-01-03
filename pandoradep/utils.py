@@ -10,10 +10,11 @@ import click
 import catkin_pkg.packages
 
 from pandoradep.config import PANDORA_REPO, INSTALL_TEMPLATE_SSH, \
-        INSTALL_TEMPLATE_HTTPS, GIT_TEMPLATE_SSH, GIT_TEMPLATE_HTTPS, COLORS
+        INSTALL_TEMPLATE_HTTPS, GIT_TEMPLATE_SSH, GIT_TEMPLATE_HTTPS, COLORS, \
+        MASTER_BRANCH
 
 
-def get_dependencies(directory, excluded=None):
+def get_dependencies(directory, excluded=None, force=False):
     ''' Fetches all the run and build dependencies '''
 
     depends = []
@@ -36,29 +37,33 @@ def get_dependencies(directory, excluded=None):
                         "repo": pandora_lookup(dep.name, repos, with_name=True)
                         }
 
-                depends = resolve_conflicts(depends, current_dep, pkg)
+                depends = resolve_conflicts(depends, current_dep, pkg, force)
+
+    for dep in depends:
+        if dep['version'] == None:
+            dep['version'] = MASTER_BRANCH
 
     return depends
 
 
-def unique_depends(pkgs, identifier='name'):
-    ''' Returns a set of pkgs according to their name '''
+def unique_depends(pkgs, key_value='repo'):
+    ''' Returns a unique list of dictionaries
 
-    temp = []
+        Arguments:
+        pkgs      -- The original list.
+        key_value -- A key to filter the list.
 
-    for lis in pkgs:
-        for dep in lis:
-            temp.append(dep)
+    '''
 
-    return {v[identifier]:v for v in temp}.values()
+    return {v[key_value]:v for v in pkgs}.values()
 
 
 def pandora_lookup(package_name, repo_list, with_name=False):
     ''' Checks if a package belongs to PANDORA.
 
         Arguments:
-        package_name -- The package we are examine.
-        repo_list    -- The list with the PANDORA repos
+        package_name -- The package we want to examine.
+        repo_list    -- The list with the PANDORA repos.
         with_name    -- If True returns the name of the repo that "package_name"
                         belongs.
         Returns:
@@ -79,7 +84,7 @@ def pandora_lookup(package_name, repo_list, with_name=False):
     else:
         return False
 
-def resolve_conflicts(old_dep_list, new_dep, package, with_warnings=True):
+def resolve_conflicts(old_dep_list, new_dep, package, force=False):
     ''' Checks for conflict between old and new dependencies
 
         Arguments:
@@ -99,9 +104,9 @@ def resolve_conflicts(old_dep_list, new_dep, package, with_warnings=True):
         if old_dep['name'] == new_dep['name']:
             if old_dep['version'] != new_dep['version']:
 
-                if with_warnings:
+                if not force:
                     show_warnings(old_dep, new_dep, package)
-                    #sys.exit(1)
+                    sys.exit(1)
 
                 if old_dep['version'] is None:
                     old_dep['version'] = new_dep['version']
@@ -110,10 +115,10 @@ def resolve_conflicts(old_dep_list, new_dep, package, with_warnings=True):
         elif old_dep['repo'] == new_dep['repo']:
             if old_dep['version'] != new_dep['version']:
 
-                if with_warnings:
+                if not force:
                     print 'Repo'
                     show_warnings(old_dep, new_dep, package)
-                    #sys.exit(1)
+                    sys.exit(1)
 
                 if old_dep['version'] is None:
                     old_dep['version'] = new_dep['version']
@@ -135,6 +140,8 @@ def show_warnings(old_dep, new_dep, package):
     click.echo(click.style('Info: ', fg=COLORS['debug']))
     click.echo(click.style(str(old_dep), fg=COLORS['debug']))
     click.echo(click.style(str(new_dep), fg=COLORS['debug']))
+    click.echo()
+    click.echo('Try again with --force to ignore this warning.')
 
 
 
@@ -146,10 +153,8 @@ def fetch_upstream():
     return yaml.safe_load(response.text)
 
 
-def print_repos(depends, repos, http, git, save_path):
+def print_repos(depends, http, git, save_path):
     ''' Prints dependencies using git or rosinstall templates '''
-
-    repos_to_fetch = set([])
 
     if git and http:
         template = Template(GIT_TEMPLATE_HTTPS)
@@ -159,14 +164,6 @@ def print_repos(depends, repos, http, git, save_path):
         template = Template(INSTALL_TEMPLATE_HTTPS)
     else:
         template = Template(INSTALL_TEMPLATE_SSH)
-
-    for dep in depends:
-        for repo in repos.keys():
-            if dep['name'] in repos[repo]:
-                print {"name": repo, "version": dep['version']}
-
-    print repos_to_fetch
-    sys.exit(69)
 
     if save_path:
 
@@ -186,20 +183,20 @@ def print_repos(depends, repos, http, git, save_path):
                        fg=COLORS['error']))
             sys.exit(1)
 
-        for repo in repos_to_fetch:
-            git_repo = template.substitute(repo_name=repo)
+        for dep in depends:
+            git_repo = template.substitute(name=dep['repo'])
             click.echo(click.style('### Cloning ' + git_repo,
                        fg=COLORS['info']))
             try:
-                check_call(['git', 'clone', git_repo])
+                check_call(['git', 'clone', '-b', dep['version'], git_repo])
             except subprocess.CalledProcessError, err:
                 click.echo(click.style(str(err), fg=COLORS['error']))
                 sys.exit(1)
     else:
 
-        for repo in repos_to_fetch:
-            click.echo(click.style(template.substitute(repo_name=repo),
-                                   fg=COLORS['success']))
+        for dep in depends:
+            temp = template.substitute(name=dep['repo'], version=dep['version'])
+            click.echo(click.style(temp, fg=COLORS['success']))
 
 
 def update_upstream(output_file, content, env_var):
