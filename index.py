@@ -86,9 +86,6 @@ def update(root, repo_name, repos_file, env):
 
 @cli.command()
 @click.argument('directory', type=click.Path(exists=True, readable=True))
-@click.option('--build', is_flag=True,
-              help='Return only the build dependencies')
-@click.option('--run', is_flag=True, help='Return only the run dependencies')
 @click.option('--git', is_flag=True, help='Return git repositories.')
 @click.option('--save', type=click.Path(exists=True,
               resolve_path=True, writable=True),
@@ -98,19 +95,15 @@ def update(root, repo_name, repos_file, env):
 @click.option('--exclude', '-x', multiple=True, default=None,
               type=click.Path(exists=True, readable=True),
               help='Exclude a directory from the scan.')
-def scan(directory, http, exclude, git, save, build, run):
+@click.option('--force', is_flag=True, help='Use it to suppress warnings.')
+def scan(directory, http, exclude, git, save, force):
     ''' Scans the directory tree for dependencies. By default returns
         rosinstall entries that you can feed into the wstool.
     '''
 
-    (build_depends, run_depends) = utils.get_dependencies(directory, exclude)
-    depends = set(build_depends).union(run_depends)
+    depends = utils.get_dependencies(directory, exclude, force)
 
-    repos = utils.fetch_upstream()
+    uniq_depends = utils.unique_depends(depends)
 
-    if build:
-        utils.print_repos(build_depends, repos, http, git, save)
-    elif run:
-        utils.print_repos(run_depends, repos, http, git, save)
-    else:
-        utils.print_repos(depends, repos, http, git, save)
+    utils.print_repos(uniq_depends, http, git, save)
+
