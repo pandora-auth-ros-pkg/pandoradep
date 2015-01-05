@@ -6,7 +6,7 @@ import yaml
 import catkin_pkg.packages
 
 from pandoradep import utils
-from pandoradep.config import colors
+from pandoradep.config import COLORS
 
 
 @click.group()
@@ -19,7 +19,7 @@ def cli():
 @click.argument('root_of_pkgs', type=click.Path(exists=True, readable=True))
 def create(root_of_pkgs):
     ''' Creates a repos.yml file, mapping each package to
-        the corresponding repo. [used by Jenkins]
+        the corresponding repo. [used by CI]
     '''
 
     package_dirs = {}
@@ -51,7 +51,7 @@ def create(root_of_pkgs):
                       the scripts. The default is JENKINS_SCRIPTS
                    ''')
 def update(root, repo_name, repos_file, env):
-    '''Updates dependencies [used by Jenkins]'''
+    '''Updates dependencies [used by CI]'''
 
     repos_file = os.path.abspath(repos_file)
 
@@ -59,36 +59,31 @@ def update(root, repo_name, repos_file, env):
         with open(repos_file, 'r') as file_handler:
             repos = yaml.safe_load(file_handler)
     except IOError, err:
-        click.echo(click.style(str(err), fg=colors['error']))
+        click.echo(click.style(str(err), fg=COLORS['error']))
         sys.exit(1)
 
-    # Info collected from catkin packages
     catkin_output = catkin_pkg.packages.find_packages(root)
 
-    # Just the names of the packages
     local_pkgs = [pkg.name for pkg in catkin_output.values()]
 
     try:
         repo_dependencies = set(repos[repo_name])
     except KeyError, err:
         click.echo(click.style(str(err) + ' not found in ' + repos_file,
-                               fg=colors['error']))
-        click.echo(click.style(str(repos.keys()), fg=colors['debug']))
+                               fg=COLORS['error']))
+        click.echo(click.style(str(repos.keys()), fg=COLORS['debug']))
         sys.exit(1)
 
     if repo_dependencies == set(local_pkgs):
-        click.echo(click.style('Nothing changed', fg=colors['success']))
+        click.echo(click.style('Nothing changed', fg=COLORS['success']))
     else:
-        click.echo(click.style('Updating packages...', fg=colors['info']))
+        click.echo(click.style('Updating packages...', fg=COLORS['info']))
         repos[repo_name] = local_pkgs
         utils.update_upstream(repos_file, repos, env)
 
 
 @cli.command()
 @click.argument('directory', type=click.Path(exists=True, readable=True))
-@click.option('--build', is_flag=True,
-              help='Return only the build dependencies')
-@click.option('--run', is_flag=True, help='Return only the run dependencies')
 @click.option('--git', is_flag=True, help='Return git repositories.')
 @click.option('--save', type=click.Path(exists=True,
               resolve_path=True, writable=True),
@@ -98,19 +93,12 @@ def update(root, repo_name, repos_file, env):
 @click.option('--exclude', '-x', multiple=True, default=None,
               type=click.Path(exists=True, readable=True),
               help='Exclude a directory from the scan.')
-def scan(directory, http, exclude, git, save, build, run):
+@click.option('--force', is_flag=True, help='Use it to suppress warnings.')
+def scan(directory, http, exclude, git, save, force):
     ''' Scans the directory tree for dependencies. By default returns
         rosinstall entries that you can feed into the wstool.
     '''
 
-    (build_depends, run_depends) = utils.get_dependencies(directory, exclude)
-    depends = set(build_depends).union(run_depends)
+    depends = utils.get_dependencies(directory, exclude, force)
 
-    repos = utils.fetch_upstream()
-
-    if build:
-        utils.print_repos(build_depends, repos, http, git, save)
-    elif run:
-        utils.print_repos(run_depends, repos, http, git, save)
-    else:
-        utils.print_repos(depends, repos, http, git, save)
+    utils.print_repos(depends, http, git, save)
