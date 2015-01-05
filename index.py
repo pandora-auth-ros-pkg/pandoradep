@@ -19,7 +19,7 @@ def cli():
 @click.argument('root_of_pkgs', type=click.Path(exists=True, readable=True))
 def create(root_of_pkgs):
     ''' Creates a repos.yml file, mapping each package to
-        the corresponding repo. [used by Jenkins]
+        the corresponding repo. [used by CI]
     '''
 
     package_dirs = {}
@@ -51,7 +51,7 @@ def create(root_of_pkgs):
                       the scripts. The default is JENKINS_SCRIPTS
                    ''')
 def update(root, repo_name, repos_file, env):
-    '''Updates dependencies [used by Jenkins]'''
+    '''Updates dependencies [used by CI]'''
 
     repos_file = os.path.abspath(repos_file)
 
@@ -62,10 +62,8 @@ def update(root, repo_name, repos_file, env):
         click.echo(click.style(str(err), fg=COLORS['error']))
         sys.exit(1)
 
-    # Info collected from catkin packages
     catkin_output = catkin_pkg.packages.find_packages(root)
 
-    # Just the names of the packages
     local_pkgs = [pkg.name for pkg in catkin_output.values()]
 
     try:
@@ -103,7 +101,4 @@ def scan(directory, http, exclude, git, save, force):
 
     depends = utils.get_dependencies(directory, exclude, force)
 
-    uniq_depends = utils.unique_depends(depends)
-
-    utils.print_repos(uniq_depends, http, git, save)
-
+    utils.print_repos(depends, http, git, save)
