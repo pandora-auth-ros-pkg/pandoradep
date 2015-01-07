@@ -31,7 +31,7 @@ Scan and write the dependencies to a ``.rosinstall`` file:
 
 ::
 
-    pandoradep scan <repo_root_directory> > some_file.rosinstall
+    pandoradep scan repo_root_directory > some_file.rosinstall
 
 Intall the dependencies, by running:
 
@@ -41,7 +41,7 @@ Intall the dependencies, by running:
     wstool update
 
 *Note: you can find more info about ``wstool`` and ``rosinstall`` files
-`here`_.*
+`here`.*
 
 .. _PyPI: https://pypi.python.org/pypi/pandoradep
 .. _here: https://github.com/pandora-auth-ros-pkg/pandora_docs/wiki/Setup%20Packages
