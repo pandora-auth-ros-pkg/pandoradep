@@ -1,5 +1,6 @@
 import os
 import sys
+from pkg_resources import require
 
 import click
 import yaml
@@ -9,10 +10,13 @@ from pandoradep import utils
 from pandoradep.config import COLORS
 
 
-@click.group()
-def cli():
+@click.group(invoke_without_command=True)
+@click.option('--version', is_flag=True, help='Return the current version.')
+def cli(version):
     ''' A tiny cli tool to manage PANDORA's dependencies. '''
-    pass
+
+    if version:
+        click.echo(require('pandoradep')[0].version)
 
 
 @cli.command()
@@ -48,7 +52,7 @@ def create(root_of_pkgs):
 @click.argument('repos_file', type=click.STRING)
 @click.option('--env', type=click.STRING, default='JENKINS_SCRIPTS',
               help='''Specify environmental variable for
-                      the scripts. The default is JENKINS_SCRIPTS
+                      the scripts. The default is JENKINS_SCRIPTS.
                    ''')
 def update(root, repo_name, repos_file, env):
     '''Updates dependencies [used by CI]'''
