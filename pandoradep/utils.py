@@ -31,6 +31,8 @@ def get_dependencies(directory, excluded=None, force=False):
         for dep in dep_pool:
             if pandora_lookup(dep.name, repos, with_name=False):
 
+                if dep.version_eq is None:
+                    dep.version_eq = MASTER_BRANCH
                 current_dep = {
                         "name": dep.name,
                         "version": dep.version_eq,
@@ -38,10 +40,6 @@ def get_dependencies(directory, excluded=None, force=False):
                         }
 
                 depends = resolve_conflicts(depends, current_dep, pkg, force)
-
-    for dep in depends:
-        if dep['version'] is None:
-            dep['version'] = MASTER_BRANCH
 
     return depends
 
@@ -79,7 +77,7 @@ def resolve_conflicts(old_dep_list, new_dep, package, force=False):
         Arguments:
         old_dep_list -- Dictionaries representing PANDORA packages
                         already stored.
-        new_dep      -- A package about to be stored.
+        new_dep      -- A package ready to be stored.
 
         Returns:
         The updated old_dep_list
@@ -94,13 +92,12 @@ def resolve_conflicts(old_dep_list, new_dep, package, force=False):
         if old_dep['repo'] == new_dep['repo']:
             if old_dep['version'] != new_dep['version']:
 
-                if not force:
-                    show_warnings(old_dep, new_dep, package)
-                    sys.exit(1)
-
-                if new_dep['version'] is None:
+                if new_dep['version'] == MASTER_BRANCH:
                     pass
                 else:
+                    if not force and old_dep['version'] != MASTER_BRANCH:
+                        show_warnings(old_dep, new_dep, package)
+                        sys.exit(1)
                     old_dep['version'] = new_dep['version']
             to_add = False
 
@@ -113,13 +110,13 @@ def resolve_conflicts(old_dep_list, new_dep, package, force=False):
 def show_warnings(old_dep, new_dep, package):
     ''' Displays warnings and debug info about conflicts. '''
 
-    click.echo(click.style("Package conflict in " + package,
-                            fg=COLORS['warning']))
-    click.echo(click.style('Info: ', fg=COLORS['debug']))
-    click.echo(click.style(str(old_dep), fg=COLORS['debug']))
-    click.echo(click.style(str(new_dep), fg=COLORS['debug']))
-    click.echo()
-    click.echo('Try again with --force to ignore this warning.')
+    click.echo("Package conflict in " +  package + " from the same repo [" +
+            new_dep['repo'] + "].", err=True)
+    click.echo('', err=True)
+    click.echo(str(old_dep['name']) + '@' + str(old_dep['version']), err=True)
+    click.echo(str(new_dep['name']) + '@' + str(new_dep['version']), err=True)
+    click.echo('', err=True)
+    click.echo('Try again with --force to ignore this warning.', err=True)
 
 
 def fetch_upstream():
@@ -155,9 +152,9 @@ def print_repos(depends, http, git, save_path):
         try:
             os.chdir(save_path)
         except OSError, err:
-            click.echo(click.style(str(err), fg=COLORS['error']))
+            click.echo(click.style(str(err), fg=COLORS['error']), err=True)
             click.echo(click.style('Invalid save path ' + save_path,
-                       fg=COLORS['error']))
+                       fg=COLORS['error']), err=True)
             sys.exit(1)
 
         for dep in depends:
@@ -167,7 +164,7 @@ def print_repos(depends, http, git, save_path):
             try:
                 check_call(['git', 'clone', '-b', dep['version'], git_repo])
             except subprocess.CalledProcessError, err:
-                click.echo(click.style(str(err), fg=COLORS['error']))
+                click.echo(click.style(str(err), fg=COLORS['error']), err=True)
                 sys.exit(1)
     else:
 
@@ -186,9 +183,9 @@ def update_upstream(output_file, content, env_var):
     try:
         os.chdir(scripts_path)
     except OSError, err:
-        click.echo(click.style(str(err), fg=COLORS['error']))
+        click.echo(click.style(str(err), fg=COLORS['error']), err=True)
         click.echo(click.style('Make sure your env is set properly.',
-                               fg=COLORS['debug']))
+                               fg=COLORS['debug']), err=True)
         sys.exit(1)
 
     with open(output_file, 'w') as file_handler:
@@ -204,5 +201,5 @@ def update_upstream(output_file, content, env_var):
         try:
             check_call(cmd, shell=True)
         except subprocess.CalledProcessError, err:
-            click.echo(click.style(str(err), fg=COLORS['error']))
+            click.echo(click.style(str(err), fg=COLORS['error']), err=True)
             sys.exit(1)
