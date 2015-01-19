@@ -27,6 +27,7 @@ def get_dependencies(directory, excluded=None, force=False):
     for pkg in pkgs:
 
         dep_pool = pkgs[pkg].build_depends + pkgs[pkg].exec_depends
+        dep_pool += pkgs[pkg].test_depends
 
         for dep in dep_pool:
             if pandora_lookup(dep.name, repos, with_name=False):
