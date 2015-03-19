@@ -1,6 +1,8 @@
 import sys
 import os
 import subprocess
+import warnings
+
 from subprocess import check_call
 from string import Template
 
@@ -123,7 +125,10 @@ def show_warnings(old_dep, new_dep, package):
 def fetch_upstream():
     ''' Returns the current pandora dependencies '''
 
-    response = requests.get(PANDORA_REPO)
+    with warnings.catch_warnings():
+        # Ignores InsecurePlatformWarning from urllib3
+        warnings.simplefilter('ignore')
+        response = requests.get(PANDORA_REPO)
 
     return yaml.safe_load(response.text)
 
