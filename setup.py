@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(name='pandoradep',
       packages=['pandoradep'],
-      version='0.2.2',
+      version='0.2.3',
       py_modules=['index'],
       description="A tiny cli tool to manage PANDORA's dependencies.",
       author='PANDORA Robotics Team',
