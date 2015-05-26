@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import os
 import sys
 from pkg_resources import require
@@ -116,12 +118,19 @@ def fetch(directory, http):
 
 @cli.command()
 @click.argument('repo')
-@click.option('--with-deps', is_flag=True, help='Also fetch the dependencies.')
+@click.option('--without-deps', is_flag=True,
+              help="Don't fetch the dependencies.")
 @click.option('--http', is_flag=True, help='Clone the repo using http.')
 @click.pass_context
-def get(ctx, repo, with_deps, http):
+def get(ctx, repo, without_deps, http):
     """ Download a PANDORA repo with its dependencies. """
 
+    repo_list = utils.fetch_upstream()
+    if not utils.pandora_lookup(repo, repo_list):
+        click.echo(click.style('✘ ' + str(repo) + ' is not a PANODRA repo.',
+                               fg=COLORS['error']))
+        sys.exit(1)
+
     utils.download_package(repo, http)
-    if with_deps:
+    if not without_deps:
         ctx.invoke(fetch, directory=repo, http=http)
