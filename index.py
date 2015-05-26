@@ -127,7 +127,7 @@ def get(ctx, repo, without_deps, http):
 
     repo_list = utils.fetch_upstream()
     if not utils.pandora_lookup(repo, repo_list):
-        click.echo(click.style('✘ ' + str(repo) + ' is not a PANODRA repo.',
+        click.echo(click.style('✘ ' + str(repo) + ' is not a PANDORA repo.',
                                fg=COLORS['error']))
         sys.exit(1)
 
