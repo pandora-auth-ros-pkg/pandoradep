@@ -87,20 +87,41 @@ def update(root, repo_name, repos_file, env):
 
 @cli.command()
 @click.argument('directory', type=click.Path(exists=True, readable=True))
-@click.option('--git', is_flag=True, help='Return git repositories.')
-@click.option('--save', type=click.Path(exists=True,
-              resolve_path=True, writable=True),
-              help='Download the dependencies in a specified directory.')
 @click.option('--http', is_flag=True,
-              help='Return git repos or rosinstall entries with https.')
+              help='Return rosinstall entries with https.')
 @click.option('--exclude', '-x', multiple=True, default=None,
               type=click.Path(exists=True, readable=True),
               help='Exclude a directory from the scan.')
 @click.option('--force', is_flag=True, help='Use it to suppress warnings.')
-def scan(directory, http, exclude, git, save, force):
+def scan(directory, http, exclude, force):
     ''' Scans the directory tree for dependencies. By default returns
         rosinstall entries that you can feed into the wstool.
     '''
 
     depends = utils.get_dependencies(directory, exclude, force)
-    utils.print_repos(depends, http, git, save)
+    utils.print_repos(depends, http)
+
+
+@cli.command()
+@click.argument('directory', default='.', type=click.Path(exists=True,
+                readable=True))
+@click.option('--http', is_flag=True, help='Clone the repos with http.')
+def fetch(directory, http):
+    """ Fetch PANDORA's dependencies. """
+
+    dependencies = utils.get_dependencies(directory)
+    repos = [dep['repo'] for dep in dependencies]
+    utils.download(repos, http)
+
+
+@cli.command()
+@click.argument('repo')
+@click.option('--with-deps', is_flag=True, help='Also fetch the dependencies.')
+@click.option('--http', is_flag=True, help='Clone the repo using http.')
+@click.pass_context
+def get(ctx, repo, with_deps, http):
+    """ Download a PANDORA repo with its dependencies. """
+
+    utils.download_package(repo, http)
+    if with_deps:
+        ctx.invoke(fetch, directory=repo, http=http)

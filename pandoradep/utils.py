@@ -1,7 +1,10 @@
+# -*- coding: utf-8 -*-
+
 import sys
 import os
 import subprocess
 import warnings
+from time import sleep
 
 from subprocess import check_call
 from string import Template
@@ -130,49 +133,17 @@ def fetch_upstream():
     return yaml.safe_load(response.text)
 
 
-def print_repos(depends, http, git, save_path):
-    ''' Prints dependencies using git or rosinstall templates '''
+def print_repos(depends, http):
+    """ Prints dependencies using rosinstall templates. """
 
-    if git and http:
-        template = Template(GIT_TEMPLATE_HTTPS)
-    elif git:
-        template = Template(GIT_TEMPLATE_SSH)
-    elif http:
+    if http:
         template = Template(INSTALL_TEMPLATE_HTTPS)
     else:
         template = Template(INSTALL_TEMPLATE_SSH)
 
-    if save_path:
-        if http:
-            template = Template(GIT_TEMPLATE_HTTPS)
-        else:
-            template = Template(GIT_TEMPLATE_SSH)
-
-        click.echo(click.style('Saving dependencies in: ' + save_path,
-                               fg=COLORS['debug']))
-        click.echo()
-        try:
-            os.chdir(save_path)
-        except OSError as err:
-            click.echo(click.style(str(err), fg=COLORS['error']), err=True)
-            click.echo(click.style('Invalid save path ' + save_path,
-                       fg=COLORS['error']), err=True)
-            sys.exit(1)
-
-        for dep in depends:
-            git_repo = template.substitute(name=dep['repo'])
-            click.echo(click.style('### Cloning ' + git_repo,
-                       fg=COLORS['info']))
-            try:
-                check_call(['git', 'clone', '-b', dep['version'], git_repo])
-            except subprocess.CalledProcessError as err:
-                click.echo(click.style(str(err), fg=COLORS['error']), err=True)
-                sys.exit(1)
-    else:
-        for dep in depends:
-            temp = template.substitute(name=dep['repo'],
-                                       version=dep['version'])
-            click.echo(click.style(temp, fg=COLORS['success']))
+    for dep in depends:
+        temp = template.substitute(name=dep['repo'], version=dep['version'])
+        click.echo(click.style(temp, fg=COLORS['success']))
 
 
 def update_upstream(output_file, content, env_var):
@@ -205,3 +176,35 @@ def update_upstream(output_file, content, env_var):
         except subprocess.CalledProcessError as err:
             click.echo(click.style(str(err), fg=COLORS['error']), err=True)
             sys.exit(1)
+
+
+def download(repos, http=False):
+    """ Dowloads PANDORA's packages and their dependencies. """
+
+    for repo in repos:
+        if download_package(repo, http):
+
+            # Check if the repo has dependencies that are not included.
+            dependencies = [dep['repo'] for dep in get_dependencies(repo)]
+            for item in dependencies:
+                if item not in repos:
+                    repos.append(item)
+
+
+def download_package(name, http):
+    """ Download a PANDORA's package. """
+
+    if http:
+        template = Template(GIT_TEMPLATE_HTTPS)
+    else:
+        template = Template(GIT_TEMPLATE_SSH)
+
+    git_repo = template.substitute(name=name)
+    if os.path.isdir(name):
+        click.echo(str(name) + click.style(' ✔', fg=COLORS['success']))
+        sleep(0.1)
+        return False
+    else:
+        click.echo(click.style('⬇ ' + str(name), fg=COLORS['info']))
+        check_call(['git', 'clone', '-b', MASTER_BRANCH, git_repo])
+        return True
