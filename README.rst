@@ -21,6 +21,23 @@ Or clone the code and install it, running:
 Usage
 ~~~~~
 
+Start working on a repo with
+
+::
+   pandoradep get pandora_vision
+
+This will download the ``pandora_vision`` repo with all its dependencies.
+
+Fetching dependencies in a workspace
+
+::
+    pandoradep fetch
+
+This will scan and fetch all the dependencies from the current directory.
+
+
+You can also use pandoradep to create rosinstall files.
+
 Init ``wstool`` in your workspace:
 
 ::
