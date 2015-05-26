@@ -62,17 +62,16 @@ def update(root, repo_name, repos_file, env):
     try:
         with open(repos_file, 'r') as file_handler:
             repos = yaml.safe_load(file_handler)
-    except IOError, err:
+    except IOError as err:
         click.echo(click.style(str(err), fg=COLORS['error']))
         sys.exit(1)
 
     catkin_output = catkin_pkg.packages.find_packages(root)
-
     local_pkgs = [pkg.name for pkg in catkin_output.values()]
 
     try:
         repo_dependencies = set(repos[repo_name])
-    except KeyError, err:
+    except KeyError as err:
         click.echo(click.style(str(err) + ' not found in ' + repos_file,
                                fg=COLORS['error']))
         click.echo(click.style(str(repos.keys()), fg=COLORS['debug']))
@@ -104,5 +103,4 @@ def scan(directory, http, exclude, git, save, force):
     '''
 
     depends = utils.get_dependencies(directory, exclude, force)
-
     utils.print_repos(depends, http, git, save)
