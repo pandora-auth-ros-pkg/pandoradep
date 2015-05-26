@@ -15,7 +15,7 @@ from pandoradep.config import COLORS
 @click.group(invoke_without_command=True)
 @click.option('--version', is_flag=True, help='Return the current version.')
 def cli(version):
-    ''' A tiny cli tool to manage PANDORA's dependencies. '''
+    """ A tiny cli tool to manage PANDORA's dependencies. """
 
     if version:
         click.echo(require('pandoradep')[0].version)
@@ -24,9 +24,9 @@ def cli(version):
 @cli.command()
 @click.argument('root_of_pkgs', type=click.Path(exists=True, readable=True))
 def create(root_of_pkgs):
-    ''' Creates a repos.yml file, mapping each package to
+    """ Create a repos.yml file, mapping each package to
         the corresponding repo. [used by CI]
-    '''
+    """
 
     package_dirs = {}
 
@@ -53,11 +53,11 @@ def create(root_of_pkgs):
 @click.argument('repo_name', type=click.STRING)
 @click.argument('repos_file', type=click.STRING)
 @click.option('--env', type=click.STRING, default='JENKINS_SCRIPTS',
-              help='''Specify environmental variable for
+              help="""Specify environmental variable for
                       the scripts. The default is JENKINS_SCRIPTS.
-                   ''')
+                   """)
 def update(root, repo_name, repos_file, env):
-    '''Updates dependencies [used by CI]'''
+    """ Update dependencies [used by CI] """
 
     repos_file = os.path.abspath(repos_file)
 
@@ -96,9 +96,9 @@ def update(root, repo_name, repos_file, env):
               help='Exclude a directory from the scan.')
 @click.option('--force', is_flag=True, help='Use it to suppress warnings.')
 def scan(directory, http, exclude, force):
-    ''' Scans the directory tree for dependencies. By default returns
+    """ Scans the directory tree for dependencies. By default returns
         rosinstall entries that you can feed into the wstool.
-    '''
+    """
 
     depends = utils.get_dependencies(directory, exclude, force)
     utils.print_repos(depends, http)

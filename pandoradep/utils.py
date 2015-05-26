@@ -20,7 +20,7 @@ from pandoradep.config import (PANDORA_REPO, INSTALL_TEMPLATE_SSH,
 
 
 def get_dependencies(directory, excluded=None, force=False):
-    ''' Fetches all the run and build dependencies '''
+    """ Fetches all the run and build dependencies """
 
     depends = []
     dep_pool = []
@@ -37,9 +37,9 @@ def get_dependencies(directory, excluded=None, force=False):
 
                 if dep.version_eq is None:
                     dep.version_eq = MASTER_BRANCH
-                current_dep = {"name": dep.name,
-                               "version": dep.version_eq,
-                               "repo": pandora_lookup(dep.name, repos,
+                current_dep = {'name': dep.name,
+                               'version': dep.version_eq,
+                               'repo': pandora_lookup(dep.name, repos,
                                                       with_name=True)
                                }
                 depends = resolve_conflicts(depends, current_dep, pkg, force)
@@ -48,7 +48,7 @@ def get_dependencies(directory, excluded=None, force=False):
 
 
 def pandora_lookup(package_name, repo_list, with_name=False):
-    ''' Checks if a package belongs to PANDORA.
+    """ Checks if a package belongs to PANDORA.
 
         Arguments:
         package_name -- The package we want to examine.
@@ -58,8 +58,7 @@ def pandora_lookup(package_name, repo_list, with_name=False):
         Returns:
         True or a repo name if the package_name is in the list.
         False or None if the package_name ins't in the list.
-
-    '''
+    """
 
     for repo in repo_list.keys():
         if package_name in repo_list[repo]:
@@ -74,7 +73,7 @@ def pandora_lookup(package_name, repo_list, with_name=False):
 
 
 def resolve_conflicts(old_dep_list, new_dep, package, force=False):
-    ''' Checks for conflicts between old and new dependencies
+    """ Checks for conflicts between old and new dependencies
 
         Arguments:
         old_dep_list -- Dictionaries representing PANDORA packages
@@ -83,7 +82,8 @@ def resolve_conflicts(old_dep_list, new_dep, package, force=False):
 
         Returns:
         The updated old_dep_list
-    '''
+    """
+
     to_add = True
 
     if not old_dep_list:
@@ -110,7 +110,7 @@ def resolve_conflicts(old_dep_list, new_dep, package, force=False):
 
 
 def show_warnings(old_dep, new_dep, package):
-    ''' Displays warnings and debug info about conflicts. '''
+    """ Displays warnings and debug info about conflicts. """
 
     click.echo("Package conflict in " + package + " from the same repo [" +
                new_dep['repo'] + "].", err=True)
@@ -122,7 +122,7 @@ def show_warnings(old_dep, new_dep, package):
 
 
 def fetch_upstream():
-    ''' Returns the current pandora dependencies '''
+    """ Returns the current pandora dependencies. """
 
     with warnings.catch_warnings():
 
@@ -147,7 +147,7 @@ def print_repos(depends, http):
 
 
 def update_upstream(output_file, content, env_var):
-    ''' Updates upstream yaml file '''
+    """ Updates upstream yaml file. """
 
     scripts_path = os.getenv(env_var)
 
