@@ -22,4 +22,4 @@ COLORS = {'error': 'red',
           }
 
 # PANDORA master branch
-MASTER_BRANCH = 'hydro-devel'
+MASTER_BRANCH = 'indigo-devel'
