@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(name='pandoradep',
       packages=['pandoradep'],
-      version='0.3.0',
+      version='0.4.0',
       py_modules=['index'],
       description="A tiny cli tool to manage PANDORA's dependencies.",
       author='PANDORA Robotics Team',
@@ -11,9 +11,9 @@ setup(name='pandoradep',
       url='https://github.com/pandora-auth-ros-pkg/pandoradep',
       license='BSD',
       install_requires=[
-          'click',
-          'catkin-pkg',
-          'requests',
+          'click==5.1.0',
+          'catkin-pkg==0.2.8',
+          'requests==2.8.1',
           'colorama',
           'pyYAML'
           ],

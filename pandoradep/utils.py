@@ -19,7 +19,7 @@ from pandoradep.config import (PANDORA_REPO, INSTALL_TEMPLATE_SSH,
                                GIT_TEMPLATE_HTTPS, COLORS, MASTER_BRANCH)
 
 
-def get_dependencies(directory, excluded=None, force=False):
+def get_dependencies(directory, excluded=None, force=False, branch=MASTER_BRANCH):
     """ Fetches all the run and build dependencies """
 
     depends = []
@@ -36,13 +36,13 @@ def get_dependencies(directory, excluded=None, force=False):
             if pandora_lookup(dep.name, repos, with_name=False):
 
                 if dep.version_eq is None:
-                    dep.version_eq = MASTER_BRANCH
+                    dep.version_eq = branch
                 current_dep = {'name': dep.name,
                                'version': dep.version_eq,
                                'repo': pandora_lookup(dep.name, repos,
                                                       with_name=True)
                                }
-                depends = resolve_conflicts(depends, current_dep, pkg, force)
+                depends = resolve_conflicts(depends, current_dep, pkg, force, branch=branch)
 
     return depends
 
@@ -72,7 +72,7 @@ def pandora_lookup(package_name, repo_list, with_name=False):
         return False
 
 
-def resolve_conflicts(old_dep_list, new_dep, package, force=False):
+def resolve_conflicts(old_dep_list, new_dep, package, force=False, branch=MASTER_BRANCH):
     """ Checks for conflicts between old and new dependencies
 
         Arguments:
@@ -94,10 +94,10 @@ def resolve_conflicts(old_dep_list, new_dep, package, force=False):
         if old_dep['repo'] == new_dep['repo']:
             if old_dep['version'] != new_dep['version']:
 
-                if new_dep['version'] == MASTER_BRANCH:
+                if new_dep['version'] == branch:
                     pass
                 else:
-                    if not force and old_dep['version'] != MASTER_BRANCH:
+                    if not force and old_dep['version'] != branch:
                         show_warnings(old_dep, new_dep, package)
                         sys.exit(1)
                     old_dep['version'] = new_dep['version']
@@ -178,20 +178,20 @@ def update_upstream(output_file, content, env_var):
             sys.exit(1)
 
 
-def download(repos, http=False):
+def download(repos, http=False, branch=MASTER_BRANCH):
     """ Dowloads PANDORA's packages and their dependencies. """
 
     for repo in repos:
-        if download_package(repo, http):
+        if download_package(repo, http, branch=branch):
 
             # Check if the repo has dependencies that are not included.
-            dependencies = [dep['repo'] for dep in get_dependencies(repo)]
+            dependencies = [dep['repo'] for dep in get_dependencies(repo, branch=branch)]
             for item in dependencies:
                 if item not in repos:
                     repos.append(item)
 
 
-def download_package(name, http):
+def download_package(name, http, branch=MASTER_BRANCH):
     """ Download a PANDORA's package. """
 
     if http:
@@ -206,5 +206,5 @@ def download_package(name, http):
         return False
     else:
         click.echo(click.style('⬇ ' + str(name), fg=COLORS['info']))
-        check_call(['git', 'clone', '-b', MASTER_BRANCH, git_repo])
+        check_call(['git', 'clone', '-b', branch, git_repo])
         return True

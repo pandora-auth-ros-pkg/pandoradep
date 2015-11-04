@@ -9,7 +9,7 @@ import yaml
 import catkin_pkg.packages
 
 from pandoradep import utils
-from pandoradep.config import COLORS
+from pandoradep.config import COLORS, MASTER_BRANCH
 
 
 @click.group(invoke_without_command=True)
@@ -95,12 +95,13 @@ def update(root, repo_name, repos_file, env):
               type=click.Path(exists=True, readable=True),
               help='Exclude a directory from the scan.')
 @click.option('--force', is_flag=True, help='Use it to suppress warnings.')
-def scan(directory, http, exclude, force):
+@click.option('--branch', default=MASTER_BRANCH, help='Set the default branch')
+def scan(directory, http, exclude, force, branch):
     """ Scans the directory tree for dependencies. By default returns
         rosinstall entries that you can feed into the wstool.
     """
 
-    depends = utils.get_dependencies(directory, exclude, force)
+    depends = utils.get_dependencies(directory, excluded=exclude, force=force, branch=branch)
     utils.print_repos(depends, http)
 
 
@@ -108,12 +109,13 @@ def scan(directory, http, exclude, force):
 @click.argument('directory', default='.', type=click.Path(exists=True,
                 readable=True))
 @click.option('--http', is_flag=True, help='Clone the repos with http.')
-def fetch(directory, http):
+@click.option('--branch', default=MASTER_BRANCH, help='Set the default branch')
+def fetch(directory, http, branch):
     """ Fetch PANDORA's dependencies. """
 
-    dependencies = utils.get_dependencies(directory)
+    dependencies = utils.get_dependencies(directory, branch=branch)
     repos = [dep['repo'] for dep in dependencies]
-    utils.download(repos, http)
+    utils.download(repos, http, branch=branch)
 
 
 @cli.command()
@@ -121,8 +123,9 @@ def fetch(directory, http):
 @click.option('--without-deps', is_flag=True,
               help="Don't fetch the dependencies.")
 @click.option('--http', is_flag=True, help='Clone the repo using http.')
+@click.option('--branch', default=MASTER_BRANCH, help='Set the default branch')
 @click.pass_context
-def get(ctx, repo, without_deps, http):
+def get(ctx, repo, without_deps, http, branch):
     """ Download a PANDORA repo with its dependencies. """
 
     repo_list = utils.fetch_upstream()
@@ -131,6 +134,6 @@ def get(ctx, repo, without_deps, http):
                                fg=COLORS['error']))
         sys.exit(1)
 
-    utils.download_package(repo, http)
+    utils.download_package(repo, http, branch=branch)
     if not without_deps:
-        ctx.invoke(fetch, directory=repo, http=http)
+        ctx.invoke(fetch, directory=repo, http=http, branch=branch)
