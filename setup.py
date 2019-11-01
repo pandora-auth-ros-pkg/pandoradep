@@ -13,7 +13,7 @@ setup(name='pandoradep',
       install_requires=[
           'click==5.1.0',
           'catkin-pkg==0.2.8',
-          'requests==2.8.1',
+          'requests==2.20.0',
           'colorama',
           'pyYAML'
           ],
